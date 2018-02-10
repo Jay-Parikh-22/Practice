@@ -1,0 +1,177 @@
+WebSocket : Lightweight Client-Server communication
+
+---------------------------------------------------------------------------------------
+
+Web sockets supported browser
+
+Chrome for Android 64+
+Chrome 16+
+iOS Safari 6.0+
+UC Browser for Android 11.8+
+Firefox 11+
+IE 10+
+Samsung Internet 4+
+Opera Mini NoneSafari 7+
+Edge 12+
+Android Browser 4.4+
+Opera 12.1+
+
+Source: caniuse.com
+
+---------------------------------------------------------------------------------------
+
+->	The Goal
+
+	"Provide a mechanism for browser-based applications 
+	that need two-way communication with servers 
+	that does not rely on opening multiple HTTP connections"
+		- RFC 6455, The WebSocket Protocol
+		
+		
+->  Why WebSocket?
+
+      In WebSocket protocol, we have single  connection,  and  the  ability  to  send  data
+back  and  forth  between  client  and  server. You  can  also  layer  another  protocol  on  top  of  WebSocket,  and  provide  it  in  a
+secure way over TLS.
+
+
+->	The Problem	[What problems is web socket trying to solve]
+
+	-	Some web apps need two-way communication / rapid low latency updates
+	
+	-	Too much overhead of HTTP headers and other stuff on each HTTP request for low latency frequent updates.
+		[TODO: get more knowledge on this problem]
+		
+		
+->	The Usual Suspects [Where we can take advantage of WebSockets]
+    
+    -   Real-time monitoring
+	-	Collaboration
+	-	Trading
+	-	Chat
+	-	Gaming
+	
+			
+			
+
+->	WebSocket protocol details:
+
+	-	TCP-based protocol [It is layer on TCP, which provides two-way messaging (full duplex, bi-directional) over a single connection]
+	
+	-	It is not HTTP, but uses HTTP to bootstrap (handshake).
+        HTTP used solely for upgrade request (Status Code 101) using which we can switch communication from protocol from HTTP to WebSocket.
+	
+	-   Bi-directional, full-duplex
+	
+	-   It is extremely low-overhead.
+        -	Small overhead for text messages (frames)
+		- 0x00 for frame start, 0xFF for frame end (vs HTTP 1Kb)
+		
+	-	Data Frames can be Text (UTF-8) or arbitrary Binary data
+	
+	-	WebSocket Schemes
+		-	Unencrypted: ws://
+		-	Encrypted: wss://
+            [For secure connection, use encrypted scheme wss://]
+		
+	-	Handshake
+	
+		-	From browser, we can send HTTP request to our HTTP server to upgrade the communication protocol from HTTP to WebSocket.
+		Following is HTTP request snippet to upgrade communication protocol from HTTP to WebSocket:
+			
+			[Request]
+			GET /mychat HTTP/1.1
+			Host: server.example.com
+			Upgrade: websocket
+			Connection: Upgrade
+			other headers...
+			
+			Now if, requested server is capable of WebSocket communication, then it will responds with following message:
+			
+			[Response]
+			HTTP/1.1 101 Switching Protocols		[101 is response for switching of communication protocol]
+			Upgrade: websocket
+			Connection: Upgrade
+			other headers..
+			
+			After this response, it's no longer HTTP connection between client and server, rather not it's long running WebSocket connection.
+			
+		
+	-	WebSocket control frames
+	
+		Communicate state about the WebSocket
+		
+			Close
+			Ping
+			Pong
+	
+	-	Close Frames
+		
+		-	Terminate WebSocket connection
+		-	Can contain a body (UTF-8 encoded)
+		-	Defines a set of Status Codes
+		
+	-	Ping + Pong frame
+	
+		-	Serves as keepalive (Ping followed by Pong)
+		-	Check whether the remote endpoint is still responsive
+		-	Can be sent at any time (WebSocket established, before close)
+		-	Just Pongs (unsolicited) = unidirectional heartbeat
+		
+	-	Multiplexing Extension (MUX) for WebSocket
+		-	Separate logical connections over underlying transport connection
+		
+	-	Sub-Protocols
+	
+		-	Sub-Protocol Header: Sec-WebSocket-Protocol
+		-	Can find for more at IANA registry.
+		
+	-	HTML5 WebSocket = W3C API + IETF Protocol
+	
+		-	The readyState attribute
+			-	CONNECTING(0): Connection not yet established
+			-	OPEN(1): Connection is established + communication possible
+			-	CLOSING(2): Connection going through closing handshake / close() method called
+			-	CLOSED(3): Connection is closed / could not be opened
+			
+		-	Event handlers:
+			-	onopen
+			-	onmessage
+			-	onerro
+			-	onclose
+	
+	-	JSR 356: Java API for WebSocket
+	
+	-	Tomcat
+	
+		-	WebSocketServlet [Since 7.0.27 (03/2012)]
+		
+		
+		
+->  STOMP over WebSocket
+
+    -   It is protocol on top of WebSocket.
+    
+    -   STOMP, an acronym for "Simple (or Streaming) Text Oriented Messaging Protocol", is a simple protocol for interacting with any STOMP message broker.
+        Any client can interact with message broker and be interoperable among languages and platforms.
+        
+    -   STOMP commands:
+    
+            CONNECT
+            SEND
+            SUBSCRIBE
+            UNSUBSCRIBE
+            BEGIN
+            COMMIT
+            ABORT
+            ACK
+            NACK
+            DISCONNECT
+            
+    -   Communication between client and server is through a "frame" consisting of a number of lines. The first line contains the command, followed by headers in the form
+        <key>: <value> (one per line), followed by a blank line and then the body content, ending in a null character. Communication between server and client is through a
+        MESSAGE, RECEIPT or ERROR frame with a similar format of headers and body content.
+    
+        -   ex: "SEND↵destination:/app/chat.addUser↵content-length:32↵↵{"sender":"manan","type":"JOIN"}"
+
+        
